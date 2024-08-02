@@ -36,6 +36,15 @@ Usage: SessionManager.sh <command> [<arguments>]
     notes
       Open session-specific notes
 
+    alias
+      Lists all aliases created in this session
+
+    alias <name>
+      Shows the content of alias <name>
+
+    alias <name> <command>
+      Makes an alias named <name> that can be run later
+
     det
     detach
       Detach from the current session
@@ -83,9 +92,70 @@ if [ "$windowId" == "" ]; then
   exit 1
 fi
 windowDir="${windowsDir}/${windowId}"
+
+function uniqueStringMatch() {
+  stringSelector="$1"
+  choices="$2"
+  # If true, output the value if it's unique - don't echo any errors
+  # If false, output any errors - don't output the value
+  outputIsError="$3"
+
+  matches="$(echo "$choices" | sed 's/ /\n/g' | grep "$stringSelector")"
+  if [ "$matches" == "" ]; then
+    if [ "$outputIsError" == "true" ]; then
+      echo "No match for $stringSelector found"
+    fi
+    return 1
+  fi
+  if echo $matches | xargs echo | grep " " >/dev/null; then
+    if [ "$outputIsError" == "true" ]; then
+      echo "Multiple matches for $stringSelector found: $matches"
+    fi
+    return 1
+  fi
+  if [ "$outputIsError" == "false" ]; then
+    echo "$matches"
+  fi
+  return 0
+}
+
+function chooseString() {
+  selector="$1"
+  choices="$2"
+  outputErrorMessage="$3"
+  # try contains match
+  if uniqueStringMatch "${selector}" "$choices" "$outputErrorMessage"; then
+    return
+  fi
+
+  # try prefix match
+  if uniqueStringMatch "^${selector}" "$choices" "$outputErrorMessage"; then
+    return
+  fi
+
+  # try unique match
+  if uniqueStringMatch "^${selector}$" "$choices" "$outputErrorMessage"; then
+    return
+  fi
+  return 0
+}
+
 function setSessionName() {
-  # make sure session dir exists
-  newSessionName="$1"
+  # process parameters
+  sessionNameQuery="$1"
+  actionType="$2" # create, autocomplete
+  if [ "$actionType" == "autocomplete" ]; then
+    candidates="$(ls "$sessionsDir" | grep "$newSessionName" || true)"
+    newSessionName="$(chooseString "$sessionNameQuery" "$candidates" false)"
+    echo "sessionNameQuery = $sessionNameQuery , newSessionName = '$newSessionName'"
+    if [ "$newSessionName" == "" ]; then
+      # report error and return
+      chooseString "$sessionNameQuery" "$candidates" "true"
+    fi
+  else
+    newSessionName="$sessionNameQuery"
+  fi
+
   mkdir -p "${windowDir}"
   # update session name 
   sessionNameFile="${windowDir}/sessionName"
@@ -100,6 +170,7 @@ function setSessionName() {
     cp "$activeSessionsFile" "$tempFile" || true 2>/dev/null
     echo "$newSessionName" >> "$tempFile"
     sort "$tempFile" | uniq > "${activeSessionsFile}"
+    rm -f "$tempFile"
   fi
 }
 
@@ -132,9 +203,34 @@ if [ "$command" == "detach" -o "$command" == "det" ]; then
   exit
 fi
 
+if [ "$command" == "alias" ]; then
+  scriptsDir="${sessionDir}/scripts"
+  aliasName="$1"
+  if [ "$aliasName" == "" ]; then
+    # list aliases
+    echo "Aliases in this session:"
+    bash -c "cd $scriptsDir && ls *.sh | sed 's/\.sh//'"
+  else
+    aliasPath="${scriptsDir}/${aliasName}.sh"
+    aliasContent="$2"
+    if [ "$aliasContent" == "" ]; then
+      # show this alias
+      echo "Alias $aliasName at $aliasPath:"
+      cat "$aliasPath"
+    else
+      # write this alias
+      mkdir -p "$scriptsDir"
+      echo "$aliasContent" > "$aliasPath"
+      chmod u+x "$aliasPath"
+      echo "Wrote $aliasPath"
+    fi
+  fi
+  exit
+fi
+
 if [ "$command" == "attach" -o "$command" == "at" ]; then
   newSessionName="$1"
-  setSessionName "$newSessionName"
+  setSessionName "$newSessionName" autocomplete
   exit
 fi
 
