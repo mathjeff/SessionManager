@@ -109,7 +109,8 @@ function uniqueStringMatch() {
   fi
   if echo $matches | xargs echo | grep " " >/dev/null; then
     if [ "$outputIsError" == "true" ]; then
-      echo "Multiple matches for $stringSelector found: $matches"
+      echo "Multiple matches for $stringSelector found:
+$matches"
     fi
     return 1
   fi
@@ -147,7 +148,6 @@ function setSessionName() {
   if [ "$actionType" == "autocomplete" ]; then
     candidates="$(ls "$sessionsDir" | grep "$newSessionName" || true)"
     newSessionName="$(chooseString "$sessionNameQuery" "$candidates" false)"
-    echo "sessionNameQuery = $sessionNameQuery , newSessionName = '$newSessionName'"
     if [ "$newSessionName" == "" ]; then
       # report error and return
       chooseString "$sessionNameQuery" "$candidates" "true"
