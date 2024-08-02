@@ -1,0 +1,222 @@
+#!/bin/bash
+set -e
+
+function usage() {
+  echo "
+SessionManager: save and recall information to and from sessions
+
+Usage: SessionManager.sh <command> [<arguments>]
+
+  User commands that don't require a session
+
+    ac
+    active
+      Lists names of all active sessions
+
+    new <name>
+      Create a new session named <name>
+
+    at <name>
+    attach <name>
+      Attaches to the session named <name>
+
+    res <sessionName>
+    resolve <sessionName>
+      Mark session <sessionName> as resolved, so it will no longer appear in the output of 'ses ac'
+
+  User commands that run within a session
+
+    hist [-d] [-u] [-v] [-a]
+      View a history of commands run in the current session
+      -d: Only show commands that were run in the current directory
+      -u: Don't output the same line more than once
+      -v: Also output the timestamp and working directory of each command
+      -a: Also include commands run in other sessions
+
+    notes
+      Open session-specific notes
+
+    det
+    detach
+      Detach from the current session
+
+  Scripting hooks that aren't intended for users to interact with directly
+
+    name
+      Output the name of the session
+
+    newWindowId
+      Chooses a new identifier for a new window
+      The caller should save this information in the SESSION_WINDOW environment variable
+
+    executing <arguments>
+      Declares that the given command is executing and should be added to the history
+
+
+"
+
+  exit 1
+}
+
+dirOfThisFile="$(cd $(dirname $0) && pwd)"
+dataDir="$(dirname $dirOfThisFile)/sessions"
+sessionsDir="${dataDir}/sessions"
+windowsDir="${dataDir}/windows"
+
+command="$1"
+shift || true
+
+if [ "$command" == "newWindowId" ]; then
+  when="$(date +%s)"
+  numberOfWindows="$(ls $windowsDir | wc -l)"
+  echo "${when}_${numberOfWindows}"
+  exit
+fi
+
+function getSessionDir() {
+  forSessionName="$1"
+  echo "${sessionsDir}/${forSessionName}"
+}
+windowId="$SESSION_WINDOW"
+if [ "$windowId" == "" ]; then
+  echo "WindowId unset: run export SESSION_WINDOW=\$(sessionManager.sh newWindowId)"
+  exit 1
+fi
+windowDir="${windowsDir}/${windowId}"
+function setSessionName() {
+  # make sure session dir exists
+  newSessionName="$1"
+  mkdir -p "${windowDir}"
+  # update session name 
+  sessionNameFile="${windowDir}/sessionName"
+  echo "$newSessionName" > "${sessionNameFile}"
+  newSessionDir="$(getSessionDir $newSessionName)"
+  mkdir -p "$newSessionDir"
+
+  # add to list of active sessions
+  if [ "$newSessionName" != "unset" ]; then
+    activeSessionsFile="${dataDir}/activeSessions"
+    tempFile="${activeSessionsFile}.temp"
+    cp "$activeSessionsFile" "$tempFile" || true 2>/dev/null
+    echo "$newSessionName" >> "$tempFile"
+    sort "$tempFile" | uniq > "${activeSessionsFile}"
+  fi
+}
+
+sessionName="$(cat ${windowDir}/sessionName 2>/dev/null || true)"
+if [ "$sessionName" == "" ]; then
+  sessionName="unset"
+fi
+sessionDir="$(getSessionDir $sessionName)"
+
+if [ "$command" == "name" ]; then
+  echo $sessionName
+  exit
+fi
+
+if [ "$command" == "active" -o "$command" == "ac" ]; then
+  activeSessionsFile="${dataDir}/activeSessions"
+  cat "$activeSessionsFile"
+  exit
+fi
+
+if [ "$command" == "new" ]; then
+  newSessionName="$1"
+  setSessionName "$newSessionName"
+  exit
+fi
+
+if [ "$command" == "detach" -o "$command" == "det" ]; then
+  newSessionName="unset"
+  setSessionName "$newSessionName"
+  exit
+fi
+
+if [ "$command" == "attach" -o "$command" == "at" ]; then
+  newSessionName="$1"
+  setSessionName "$newSessionName"
+  exit
+fi
+
+if [ "$command" == "resolve" -o "$command" == "res" ]; then
+  resolveSessionName="$1"
+  activeSessionsFile="${dataDir}/activeSessions"
+  tempFile="${activeSessionsFile}.temp"
+  grep -v "^${resolveSessionName}" "$activeSessionsFile" > "$tempFile"
+  mv "$tempFile" "$activeSessionsFile"
+  echo "Resolved session $resolveSessionName"
+  exit
+fi
+
+if [ "$command" == "notes" ]; then
+  notesPath="${sessionDir}/notes"
+  vi ${notesPath}
+  exit
+fi
+
+if [ "$command" == "hist" ]; then
+  requireSameDir=false
+  removeDuplicates=false
+  verbose=false
+  includeAllSessions=false
+  length=
+
+  while [ "$1" != "" ]; do
+    arg="$1"
+    shift
+    if [ "$arg" == "-d" ]; then
+      requireSameDir=true
+      continue
+    fi
+    if [ "$arg" == "-u" ]; then
+      removeDuplicates=true
+      continue
+    fi
+    if [ "$arg" == "-v" ]; then
+      verbose=true
+      continue
+    fi
+    if [ "$arg" == "-a" ]; then
+      includeAllSessions=true
+      continue;
+    fi
+    length="$arg"
+  done
+  if [ "$includeAllSessions" == "true" ]; then
+    sessionNames="*"
+  else
+    sessionNames="$sessionName"
+  fi
+  historyFiles="$(ls ${sessionsDir}/${sessionNames}/history | xargs echo)"
+  if [ "$length" == "" ]; then
+    fileReader="cat"
+  else
+    fileReader="tail -n $length"
+  fi
+
+  histCommand="$fileReader $historyFiles"
+  if [ "$requireSameDir" == "true" ]; then
+    histCommand="$histCommand | grep '$PWD '"
+  fi
+  if [ "$verbose" == "false" ]; then
+    histCommand="$histCommand | sed 's/^\([^ ]*\) \([^ ]*\) //'"
+  fi
+  if [ "$removeDuplicates" == "true" ]; then
+    histCommand="$histCommand | sort | uniq -c | sort -n"
+  fi
+
+  bash -c "$histCommand"
+  exit
+fi
+
+if [ "$command" == "executing" ]; then
+  historyFile="${sessionDir}/history"
+  if [ ! -e "${historyFile}" ]; then
+    mkdir -p "$(dirname ${historyFile})"
+  fi
+  echo "$PWD $(date +%Y-%m-%d:%H:%M:%S) $*" >> "${historyFile}"
+  exit
+fi
+
+# didn't find a command
+usage
