@@ -48,6 +48,9 @@ Usage: SessionManager.sh <command> [<arguments>]
     alias <name> <command>
       Makes an alias named <name> that can be run later
 
+    run <name>
+      Runs alias <name>
+
     det
     detach
       Detach from the current session
@@ -235,6 +238,24 @@ if [ "$command" == "alias" ]; then
       chmod u+x "$aliasPath"
       echo "Wrote $aliasPath"
     fi
+  fi
+  exit
+fi
+
+if [ "$command" == "run" ]; then
+  scriptsDir="${sessionDir}/scripts"
+  aliasName="$1"
+  if [ "$aliasName" == "" ]; then
+    # list aliases
+    echo "Aliases in this session:"
+    if [ -e "$scriptsDir" ]; then
+      bash -c "cd $scriptsDir && ls *.sh | sed 's/\.sh//'"
+    else
+      echo "None found."
+    fi
+  else
+    aliasPath="${scriptsDir}/${aliasName}.sh"
+    bash -c "$aliasPath"
   fi
   exit
 fi
