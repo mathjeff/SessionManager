@@ -186,7 +186,7 @@ function setSessionName() {
     tempFile="${activeSessionsFile}.temp"
     cp "$activeSessionsFile" "$tempFile" || true 2>/dev/null
     echo "$newSessionName" >> "$tempFile"
-    sort "$tempFile" | uniq > "${activeSessionsFile}"
+    sort "$tempFile" | uniq | grep -v "^$" > "${activeSessionsFile}"
     rm -f "$tempFile"
   fi
 }
