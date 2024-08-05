@@ -61,16 +61,15 @@ Usage: SessionManager.sh <command> [<arguments>]
     executing <arguments>
       Declares that the given command is executing and should be added to the history
 
-
 "
 
   exit 1
 }
 
-dirOfThisFile="$(cd $(dirname $0) && pwd)"
-dataDir="$(dirname $dirOfThisFile)/sessions"
-sessionsDir="${dataDir}/sessions"
-windowsDir="${dataDir}/windows"
+dirOfThisFile="$(dirname $0)"
+dataDir="$dirOfThisFile/../sessions"
+sessionsDir="$dataDir/sessions"
+windowsDir="$dataDir/windows"
 
 command="$1"
 shift || true
@@ -82,16 +81,34 @@ if [ "$command" == "newWindowId" ]; then
   exit
 fi
 
-function getSessionDir() {
-  forSessionName="$1"
-  echo "${sessionsDir}/${forSessionName}"
-}
 windowId="$SESSION_WINDOW"
 if [ "$windowId" == "" ]; then
   echo "WindowId unset: run export SESSION_WINDOW=\$(sessionManager.sh newWindowId)"
   exit 1
 fi
 windowDir="${windowsDir}/${windowId}"
+
+sessionName="$(cat ${windowDir}/sessionName 2>/dev/null || true)"
+if [ "$sessionName" == "" ]; then
+  sessionName="unset"
+fi
+
+if [ "$command" == "name" ]; then
+  echo $sessionName
+  exit
+fi
+
+function getSessionDir() {
+  forSessionName="$1"
+  echo "${sessionsDir}/${forSessionName}"
+}
+sessionDir="$(getSessionDir $sessionName)"
+
+if [ "$command" == "active" -o "$command" == "ac" ]; then
+  activeSessionsFile="${dataDir}/activeSessions"
+  cat "$activeSessionsFile"
+  exit
+fi
 
 function uniqueStringMatch() {
   stringSelector="$1"
@@ -174,22 +191,6 @@ function setSessionName() {
   fi
 }
 
-sessionName="$(cat ${windowDir}/sessionName 2>/dev/null || true)"
-if [ "$sessionName" == "" ]; then
-  sessionName="unset"
-fi
-sessionDir="$(getSessionDir $sessionName)"
-
-if [ "$command" == "name" ]; then
-  echo $sessionName
-  exit
-fi
-
-if [ "$command" == "active" -o "$command" == "ac" ]; then
-  activeSessionsFile="${dataDir}/activeSessions"
-  cat "$activeSessionsFile"
-  exit
-fi
 
 if [ "$command" == "new" ]; then
   newSessionName="$1"
