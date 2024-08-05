@@ -19,3 +19,5 @@
 * Query history for a specific session
 
 * Create, browse, and run aliases specific to the current session
+
+## To set up, go to [Setup.md](Setup.md)
