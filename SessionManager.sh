@@ -109,6 +109,9 @@ sessionDir="$(getSessionDir $sessionName)"
 
 if [ "$command" == "active" -o "$command" == "ac" ]; then
   activeSessionsFile="${dataDir}/activeSessions"
+  if [ ! -f "$activeSessionsFile" ]; then
+    touch "$activeSessionsFile"
+  fi
   cat "$activeSessionsFile"
   exit
 fi
@@ -187,7 +190,7 @@ function setSessionName() {
   if [ "$newSessionName" != "unset" ]; then
     activeSessionsFile="${dataDir}/activeSessions"
     tempFile="${activeSessionsFile}.temp"
-    cp "$activeSessionsFile" "$tempFile" || true 2>/dev/null
+    cp "$activeSessionsFile" "$tempFile" 2>/dev/null || true
     echo "$newSessionName" >> "$tempFile"
     sort "$tempFile" | uniq | grep -v "^$" > "${activeSessionsFile}"
     rm -f "$tempFile"
