@@ -21,3 +21,7 @@
 1. Make any desired changes to the setup.
 
 1. Run enable.sh to enable SessionManager
+
+# Usage
+
+For help using SessionManager, see [Usage.md](Usage.md)
