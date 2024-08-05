@@ -27,7 +27,7 @@ Usage: SessionManager.sh <command> [<arguments>]
   User commands that run within a session
 
     hist [-d] [-u] [-v] [-a] [<count>]
-      View a history of the last <count> commands (default all) run in the current session
+      View a history of the last <count> commands (default 10) run in the current session
       -d: Only show commands that were run in the current directory
       -u: Don't output the same line more than once
       -v: Also output the timestamp and working directory of each command
@@ -264,7 +264,7 @@ if [ "$command" == "hist" ]; then
   removeDuplicates=false
   verbose=false
   includeAllSessions=false
-  length=
+  length=10
 
   while [ "$1" != "" ]; do
     arg="$1"
