@@ -26,12 +26,15 @@ Usage: SessionManager.sh <command> [<arguments>]
 
   User commands that run within a session
 
-    hist [-d] [-u] [-v] [-a]
-      View a history of commands run in the current session
+    hist [-d] [-u] [-v] [-a] [<count>]
+      View a history of the last <count> commands (default all) run in the current session
       -d: Only show commands that were run in the current directory
       -u: Don't output the same line more than once
       -v: Also output the timestamp and working directory of each command
       -a: Also include commands run in other sessions
+
+    dirs [<count>]
+      View the last <count> (default 10) working directories of commands in this session
 
     notes
       Open session-specific notes
@@ -67,7 +70,7 @@ Usage: SessionManager.sh <command> [<arguments>]
 }
 
 dirOfThisFile="$(dirname $0)"
-dataDir="$dirOfThisFile/../sessions"
+dataDir="$(cd $dirOfThisFile/.. && pwd)/sessions"
 sessionsDir="$dataDir/sessions"
 windowsDir="$dataDir/windows"
 
@@ -251,6 +254,11 @@ if [ "$command" == "notes" ]; then
   exit
 fi
 
+function relpath() {
+  abspath="$1"
+  realpath "$abspath" --relative-to .
+}
+
 if [ "$command" == "hist" ]; then
   requireSameDir=false
   removeDuplicates=false
@@ -285,24 +293,38 @@ if [ "$command" == "hist" ]; then
     sessionNames="$sessionName"
   fi
   historyFiles="$(ls ${sessionsDir}/${sessionNames}/history | xargs echo)"
-  if [ "$length" == "" ]; then
-    fileReader="cat"
-  else
-    fileReader="tail -n $length"
-  fi
+  for filename in $historyFiles; do
+    echo "In ${filename}:"
+    histCommand="cat $historyFiles"
+    if [ "$requireSameDir" == "true" ]; then
+      histCommand="$histCommand | grep '$PWD '"
+    fi
+    if [ "$verbose" == "false" ]; then
+      histCommand="$histCommand | sed 's/^\([^ ]*\) \([^ ]*\) //'"
+    fi
+    if [ "$removeDuplicates" == "true" ]; then
+      uniquer="$(relpath $dirOfThisFile/impl/latest-uniq.py)"
+      histCommand="$histCommand | $uniquer"
+    fi
+    if [ "$length" != "" ]; then
+      histCommand="$histCommand | tail -n $length"
+    fi
+    bash -c "$histCommand"
+    echo
+  done
+  exit
+fi
 
-  histCommand="$fileReader $historyFiles"
-  if [ "$requireSameDir" == "true" ]; then
-    histCommand="$histCommand | grep '$PWD '"
+if [ "$command" == "dirs" ]; then
+  count="$1"
+  if [ "$count" == "" ]; then
+    count="10"
   fi
-  if [ "$verbose" == "false" ]; then
-    histCommand="$histCommand | sed 's/^\([^ ]*\) \([^ ]*\) //'"
-  fi
-  if [ "$removeDuplicates" == "true" ]; then
-    histCommand="$histCommand | sort | uniq -c | sort -n"
-  fi
+  historyFile="$sessionsDir/$sessionName/history"
+  uniquer="$(relpath $dirOfThisFile/impl/latest-uniq.py)"
 
-  bash -c "$histCommand"
+  echo "Last $count unique directories in ${sessionName}:"
+  cat "$historyFile" | sed 's/ .*//' | "$uniquer" | tail -n "$count"
   exit
 fi
 
