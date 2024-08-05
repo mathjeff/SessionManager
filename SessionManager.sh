@@ -213,7 +213,11 @@ if [ "$command" == "alias" ]; then
   if [ "$aliasName" == "" ]; then
     # list aliases
     echo "Aliases in this session:"
-    bash -c "cd $scriptsDir && ls *.sh | sed 's/\.sh//'"
+    if [ -e "$scriptsDir" ]; then
+      bash -c "cd $scriptsDir && ls *.sh | sed 's/\.sh//'"
+    else
+      echo "None found."
+    fi
   else
     aliasPath="${scriptsDir}/${aliasName}.sh"
     aliasContent="$2"
