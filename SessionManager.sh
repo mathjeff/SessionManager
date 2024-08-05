@@ -79,7 +79,7 @@ shift || true
 
 if [ "$command" == "newWindowId" ]; then
   when="$(date +%s)"
-  numberOfWindows="$(ls $windowsDir 2>/dev/null | wc -l)"
+  numberOfWindows="$(ls $windowsDir 2>/dev/null | wc -l | grep -o '[0-9][0-9]*')"
   echo "${when}_${numberOfWindows}"
   exit
 fi
