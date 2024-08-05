@@ -72,13 +72,13 @@ Usage: SessionManager.sh <command> [<arguments>]
   exit 1
 }
 
-dirOfThisFile="$(dirname $0)"
-dataDir="$(cd $dirOfThisFile/.. && pwd)/sessions"
+dirOfThisFile="${0//\/SessionManager.sh/}"
+#dataDir="$(cd $dirOfThisFile/.. && pwd)/sessions"
+dataDir="$dirOfThisFile/../sessions"
 sessionsDir="$dataDir/sessions"
 windowsDir="$dataDir/windows"
 
 command="$1"
-shift || true
 
 if [ "$command" == "newWindowId" ]; then
   when="$(date +%s)"
@@ -92,9 +92,9 @@ if [ "$windowId" == "" ]; then
   echo "WindowId unset: run export SESSION_WINDOW=\$(sessionManager.sh newWindowId)"
   exit 1
 fi
-windowDir="${windowsDir}/${windowId}"
+windowDir="$windowsDir/$windowId"
 
-sessionName="$(cat ${windowDir}/sessionName 2>/dev/null || true)"
+sessionName="$(cat $windowDir/sessionName 2>/dev/null || true)"
 if [ "$sessionName" == "" ]; then
   sessionName="unset"
 fi
@@ -109,6 +109,20 @@ function getSessionDir() {
   echo "${sessionsDir}/${forSessionName}"
 }
 sessionDir="$(getSessionDir $sessionName)"
+
+shift || true
+
+if [ "$command" == "executing" ]; then
+  historyFile="${sessionDir}/history"
+  if [ ! -e "${historyFile}" ]; then
+    mkdir -p "$(dirname ${historyFile})"
+  fi
+  echo "$PWD $(date +%Y-%m-%d:%H:%M:%S) $*" >> "${historyFile}"
+  exit
+fi
+
+# Code above here might run as part of the command prompt so we'd like it to be extra fast
+# Code after here should only run when the user explicitly calls it, so it doesn't need to be as fast
 
 if [ "$command" == "active" -o "$command" == "ac" ]; then
   activeSessionsFile="${dataDir}/activeSessions"
@@ -353,15 +367,6 @@ if [ "$command" == "dirs" ]; then
 
   echo "Last $count unique directories in ${sessionName}:"
   cat "$historyFile" | sed 's/ .*//' | "$uniquer" | tail -n "$count"
-  exit
-fi
-
-if [ "$command" == "executing" ]; then
-  historyFile="${sessionDir}/history"
-  if [ ! -e "${historyFile}" ]; then
-    mkdir -p "$(dirname ${historyFile})"
-  fi
-  echo "$PWD $(date +%Y-%m-%d:%H:%M:%S) $*" >> "${historyFile}"
   exit
 fi
 
