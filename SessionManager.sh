@@ -13,12 +13,14 @@ Usage: SessionManager.sh <command> [<arguments>]
     active
       Lists names of all active sessions
 
-    new <name>
+    new <name> [--all]
       Create a new session named <name>
+      If --all is specified, all windows are attached to the session named <name>
 
-    at <name>
-    attach <name>
+    at <name> [--all]
+    attach <name> [--all]
       Attaches to the session named <name>
+      If --all is specified, all windows are attached to the session named <name>
 
     res <sessionName>
     resolve <sessionName>
@@ -81,9 +83,16 @@ windowsDir="$dataDir/windows"
 command="$1"
 
 if [ "$command" == "newWindowId" ]; then
+  # choose window id
   when="$(date +%s)"
   numberOfWindows="$(ls $windowsDir 2>/dev/null | wc -l | grep -o '[0-9][0-9]*')"
-  echo "${when}_${numberOfWindows}"
+  newWindowId="${when}_${numberOfWindows}"
+  echo "$newWindowId"
+  # also make a directory for this window
+  windowDir="$windowsDir/$newWindowId"
+  mkdir -p "$windowDir"
+  touch "$windowDir/sessionName"
+
   exit
 fi
 
@@ -212,12 +221,22 @@ function setSessionName() {
     sort "$tempFile" | uniq | grep -v "^$" > "${activeSessionsFile}"
     rm -f "$tempFile"
   fi
+  sessionName="$newSessionName"
 }
 
+function setAllWindowsSessionName() {
+  newSessionName="$1"
+
+  # update session name for other windows
+  echo "$newSessionName" | tee $windowsDir/*/sessionName >/dev/null
+}
 
 if [ "$command" == "new" ]; then
   newSessionName="$1"
   setSessionName "$newSessionName"
+  if [ "$2" == "--all" ]; then
+    setAllWindowsSessionName "$sessionName"
+  fi
   exit
 fi
 
@@ -277,6 +296,9 @@ fi
 if [ "$command" == "attach" -o "$command" == "at" ]; then
   newSessionName="$1"
   setSessionName "$newSessionName" autocomplete
+  if [ "$2" == "--all" ]; then
+    setAllWindowsSessionName "$sessionName"
+  fi
   exit
 fi
 
