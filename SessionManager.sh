@@ -200,6 +200,7 @@ function setSessionName() {
     if [ "$newSessionName" == "" ]; then
       # report error and return
       chooseString "$sessionNameQuery" "$candidates" "true"
+      return
     fi
   else
     newSessionName="$sessionNameQuery"
