@@ -207,7 +207,7 @@ function setSessionName() {
   fi
 
   mkdir -p "${windowDir}"
-  # update session name 
+  # update session name
   sessionNameFile="${windowDir}/sessionName"
   echo "$newSessionName" > "${sessionNameFile}"
   newSessionDir="$(getSessionDir $newSessionName)"
@@ -368,8 +368,7 @@ if [ "$command" == "hist" ]; then
       histCommand="$histCommand | sed 's/^\([^ ]*\) \([^ ]*\) //'"
     fi
     if [ "$removeDuplicates" == "true" ]; then
-      uniquer="$(relpath $dirOfThisFile/impl/latest-uniq.py)"
-      histCommand="$histCommand | $uniquer"
+      histCommand="$histCommand | $dirOfThisFile/impl/latest-uniq.sh"
     fi
     if [ "$length" != "" ]; then
       histCommand="$histCommand | tail -n $length"
@@ -380,16 +379,16 @@ if [ "$command" == "hist" ]; then
   exit
 fi
 
+
 if [ "$command" == "dirs" ]; then
   count="$1"
   if [ "$count" == "" ]; then
     count="10"
   fi
   historyFile="$sessionsDir/$sessionName/history"
-  uniquer="$(relpath $dirOfThisFile/impl/latest-uniq.py)"
 
   echo "Last $count unique directories in ${sessionName}:"
-  cat "$historyFile" | sed 's/ .*//' | "$uniquer" | tail -n "$count"
+  cat "$historyFile" | sed 's/ .*//' | "$dirOfThisFile/impl/latest-uniq.sh" | tail -n "$count"
   exit
 fi
 
