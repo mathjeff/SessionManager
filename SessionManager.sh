@@ -360,7 +360,7 @@ if [ "$command" == "hist" ]; then
   historyFiles="$(ls ${sessionsDir}/${sessionNames}/history | xargs echo)"
   for filename in $historyFiles; do
     echo "In ${filename}:"
-    histCommand="cat $historyFiles"
+    histCommand="cat $filename"
     if [ "$requireSameDir" == "true" ]; then
       histCommand="$histCommand | grep '$PWD '"
     fi
