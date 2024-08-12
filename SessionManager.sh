@@ -143,50 +143,52 @@ if [ "$command" == "active" -o "$command" == "ac" ]; then
   exit
 fi
 
-function uniqueStringMatch() {
+function stringMatch() {
   stringSelector="$1"
   choices="$2"
-  # If true, output the value if it's unique - don't echo any errors
-  # If false, output any errors - don't output the value
-  outputIsError="$3"
-
   matches="$(echo "$choices" | sed 's/ /\n/g' | grep "$stringSelector")"
-  if [ "$matches" == "" ]; then
-    if [ "$outputIsError" == "true" ]; then
-      echo "No match for $stringSelector found"
-    fi
-    return 1
-  fi
-  if echo $matches | xargs echo | grep " " >/dev/null; then
-    if [ "$outputIsError" == "true" ]; then
-      echo "Multiple matches for $stringSelector found:
-$matches"
-    fi
-    return 1
-  fi
-  if [ "$outputIsError" == "false" ]; then
-    echo "$matches"
-  fi
-  return 0
+  echo "$matches"
 }
 
 function chooseString() {
   selector="$1"
   choices="$2"
   outputErrorMessage="$3"
-  # try contains match
-  if uniqueStringMatch "${selector}" "$choices" "$outputErrorMessage"; then
-    return
+  if [ "$outputErrorMessage" == "true" ]; then
+    outputUniqueMatch="false"
+  else
+    outputUniqueMatch="true"
   fi
 
-  # try prefix match
-  if uniqueStringMatch "^${selector}" "$choices" "$outputErrorMessage"; then
-    return
-  fi
+  # selectors from most to least specific
+  selectors="^${selector}$ ^${selector} ${selector}"
 
-  # try unique match
-  if uniqueStringMatch "^${selector}$" "$choices" "$outputErrorMessage"; then
-    return
+  latestUnmatched=""
+  for matcher in $selectors; do
+    match="$(stringMatch "$matcher" "$choices")"
+    if echo "$match" | xargs echo | grep " " > /dev/null; then
+      # multiple matches
+      if [ "$outputErrorMessage" == "true" ]; then
+        echo "Multiple matches for $matcher found:"
+        echo $match | sed 's/ /\n/g'
+        return 1
+      fi
+      return 0
+    fi
+    if [ "$match" == "" ]; then
+      if [ "$outputErrorMessage" == "true" ]; then
+        latestUnmatched="$matcher"
+      fi
+      continue
+    fi
+    if [ "$outputUniqueMatch" == "true" ]; then
+      echo "$match"
+    fi
+    return 0
+  done
+  if [ "$outputErrorMessage" == "true" ]; then
+    echo "No match for $latestUnmatched"
+    return 1
   fi
   return 0
 }
@@ -354,7 +356,7 @@ if [ "$command" == "hist" ]; then
     fi
     if [ "$arg" == "-a" ]; then
       includeAllSessions=true
-      continue;
+      continue
     fi
     length="$arg"
   done
