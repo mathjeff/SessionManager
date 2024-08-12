@@ -25,6 +25,7 @@ Usage: SessionManager.sh <command> [<arguments>]
     res <sessionName>
     resolve <sessionName>
       Mark session <sessionName> as resolved, so it will no longer appear in the output of 'ses ac'
+      If <sessionName> is unspecified, the current session will be resolved instead
 
   User commands that run within a session
 
@@ -305,6 +306,11 @@ fi
 
 if [ "$command" == "resolve" -o "$command" == "res" ]; then
   resolveSessionName="$1"
+  if [ "$resolveSessionName" == "" ]; then
+    echo "Detaching from current session"
+    resolveSessionName="$sessionName"
+    setSessionName unset
+  fi
   activeSessionsFile="${dataDir}/activeSessions"
   tempFile="${activeSessionsFile}.temp"
   grep -v "^${resolveSessionName}" "$activeSessionsFile" > "$tempFile"
