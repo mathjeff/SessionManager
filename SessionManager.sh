@@ -337,7 +337,7 @@ if [ "$command" == "hist" ]; then
   removeDuplicates=false
   verbose=false
   includeAllSessions=false
-  length=10
+  length=
 
   while [ "$1" != "" ]; do
     arg="$1"
