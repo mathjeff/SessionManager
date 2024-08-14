@@ -29,12 +29,13 @@ Usage: SessionManager.sh <command> [<arguments>]
 
   User commands that run within a session
 
-    hist [-d] [-u] [-v] [-a] [<count>]
+    hist [-d] [-u] [-v] [-a] [-g <regex>] [<count>]
       View a history of the last <count> commands (default 10) run in the current session
       -d: Only show commands that were run in the current directory
       -u: Don't output the same line more than once
       -v: Also output the timestamp and working directory of each command
       -a: Also include commands run in other sessions
+      -g: Only report results matching the given regex
 
     dirs [<count>]
       View the last <count> (default 10) working directories of commands in this session
@@ -338,6 +339,7 @@ if [ "$command" == "hist" ]; then
   verbose=false
   includeAllSessions=false
   length=
+  filter=
 
   while [ "$1" != "" ]; do
     arg="$1"
@@ -358,6 +360,11 @@ if [ "$command" == "hist" ]; then
       includeAllSessions=true
       continue
     fi
+    if [ "$arg" == "-g" ]; then
+      filter="$1"
+      shift
+      continue
+    fi
     length="$arg"
   done
   if [ "$includeAllSessions" == "true" ]; then
@@ -374,6 +381,9 @@ if [ "$command" == "hist" ]; then
     fi
     if [ "$verbose" == "false" ]; then
       histCommand="$histCommand | sed 's/^\([^ ]*\) \([^ ]*\) //'"
+    fi
+    if [ "$filter" != "" ]; then
+      histCommand="$histCommand | grep '$filter'"
     fi
     if [ "$removeDuplicates" == "true" ]; then
       histCommand="$histCommand | $dirOfThisFile/impl/latest-uniq.sh"
