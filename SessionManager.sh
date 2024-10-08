@@ -128,7 +128,7 @@ if [ "$command" == "executing" ]; then
   if [ ! -e "${historyFile}" ]; then
     mkdir -p "$(dirname ${historyFile})"
   fi
-  echo "$PWD $(date +%Y-%m-%d:%H:%M:%S) $*" >> "${historyFile}"
+  echo "$PWD $(date +%Y-%m-%dT%H:%M:%S) $*" >> "${historyFile}"
   exit
 fi
 
