@@ -17,12 +17,12 @@ Usage: SessionManager.sh <command> [<arguments>]
       Create a new session named <name>
       If --all is specified, all windows are attached to the session named <name>
 
-    at <name> [--all]
+    at     <name> [--all]
     attach <name> [--all]
       Attaches to the session named <name>
       If --all is specified, all windows are attached to the session named <name>
 
-    res <sessionName>
+    res     <sessionName>
     resolve <sessionName>
       Mark session <sessionName> as resolved, so it will no longer appear in the output of 'ses ac'
       If <sessionName> is unspecified, the current session will be resolved instead
@@ -55,8 +55,8 @@ Usage: SessionManager.sh <command> [<arguments>]
     run <name>
       Runs alias <name>
 
-    det
-    detach
+    det    [--all]
+    detach [--all]
       Detach from the current session
 
   Scripting hooks that aren't intended for users to interact with directly
@@ -247,7 +247,11 @@ fi
 
 if [ "$command" == "detach" -o "$command" == "det" ]; then
   newSessionName="unset"
-  setSessionName "$newSessionName"
+  if [ "$1" == "--all" ]; then
+    setAllWindowsSessionName "$newSessionName"
+  else
+    setSessionName "$newSessionName"
+  fi
   exit
 fi
 
