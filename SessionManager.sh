@@ -55,6 +55,9 @@ Usage: SessionManager.sh <command> [<arguments>]
     run <name>
       Runs alias <name>
 
+    analyze [<sessionName>]
+      Outputs commands that tend to take a long time in the given session (the current session by default)
+
     det    [--all]
     detach [--all]
       Detach from the current session
@@ -311,13 +314,25 @@ if [ "$command" == "attach" -o "$command" == "at" ]; then
   exit
 fi
 
+function analyzeSession() {
+  analyzeSessionName="$1"
+
+  analysisScriptDir="$dirOfThisFile/impl"
+  analysisScript="$analysisScriptDir/analyze-history.sh"
+  historyFile="$sessionsDir/$analyzeSessionName/history"
+  relativeHistoryFile="$(realpath --relative-to $analysisScriptDir $historyFile)"
+  "$analysisScript" "$relativeHistoryFile"
+}
+
 if [ "$command" == "resolve" -o "$command" == "res" ]; then
   resolveSessionName="$1"
+
   if [ "$resolveSessionName" == "" ]; then
     echo "Detaching from current session"
     resolveSessionName="$sessionName"
     setSessionName unset
   fi
+  analyzeSession "$resolveSessionName"
   activeSessionsFile="${dataDir}/activeSessions"
   tempFile="${activeSessionsFile}.temp"
   grep -v "^${resolveSessionName}" "$activeSessionsFile" > "$tempFile"
@@ -411,6 +426,15 @@ if [ "$command" == "dirs" ]; then
 
   echo "Last $count unique directories in ${sessionName}:"
   cat "$historyFile" | sed 's/ .*//' | "$dirOfThisFile/impl/latest-uniq.sh" | tail -n "$count"
+  exit
+fi
+
+if [ "$command" == "analyze" ]; then
+  analyzeSessionName="$1"
+  if [ "$analyzeSessionName" == "" ]; then
+    analyzeSessionName="$sessionName"
+  fi
+  analyzeSession "$analyzeSessionName"
   exit
 fi
 
