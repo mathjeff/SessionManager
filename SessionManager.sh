@@ -393,7 +393,6 @@ if [ "$command" == "hist" ]; then
   fi
   historyFiles="$(ls ${sessionsDir}/${sessionNames}/history | xargs echo)"
   for filename in $historyFiles; do
-    echo "In ${filename}:"
     histCommand="cat $filename"
     if [ "$requireSameDir" == "true" ]; then
       histCommand="$histCommand | grep '$PWD '"
@@ -410,8 +409,10 @@ if [ "$command" == "hist" ]; then
     if [ "$length" != "" ]; then
       histCommand="$histCommand | tail -n $length"
     fi
+    # add a title if results are nonempty
+    histCommand="$histCommand | $dirOfThisFile/impl/title.sh '
+In ${filename}:'"
     bash -c "$histCommand" || true
-    echo
   done
   exit
 fi
