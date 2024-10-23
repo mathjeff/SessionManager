@@ -410,7 +410,7 @@ if [ "$command" == "hist" ]; then
     if [ "$length" != "" ]; then
       histCommand="$histCommand | tail -n $length"
     fi
-    bash -c "$histCommand"
+    bash -c "$histCommand" || true
     echo
   done
   exit
