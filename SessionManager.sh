@@ -22,6 +22,9 @@ Usage: SessionManager.sh <command> [<arguments>]
       Attaches to the session named <name>
       If --all is specified, all windows are attached to the session named <name>
 
+    aat <name>
+      Short for 'at <name> --all'
+
     res     <sessionName>
     resolve <sessionName>
       Mark session <sessionName> as resolved, so it will no longer appear in the output of 'ses ac'
@@ -305,10 +308,10 @@ if [ "$command" == "run" ]; then
   exit
 fi
 
-if [ "$command" == "attach" -o "$command" == "at" ]; then
+if [ "$command" == "attach" -o "$command" == "at" -o "$command" == "aat" ]; then
   newSessionName="$1"
   setSessionName "$newSessionName" autocomplete
-  if [ "$2" == "--all" ]; then
+  if [ "$2" == "--all" -o "$command" == "aat" ]; then
     setAllWindowsSessionName "$sessionName"
   fi
   exit
