@@ -32,7 +32,8 @@ Usage: SessionManager.sh <command> [<arguments>]
 
   User commands that run within a session
 
-    hist [-d] [-u] [-v] [-a] [-g <regex>] [<count>]
+    hist    [-d] [-u] [-v] [-a] [-g <regex>] [<count>]
+    history [-d] [-u] [-v] [-a] [-g <regex>] [<count>]
       View a history of the last <count> commands (default 10) run in the current session
       -d: Only show commands that were run in the current directory
       -u: Don't output the same line more than once
@@ -355,7 +356,7 @@ function relpath() {
   realpath "$abspath" --relative-to .
 }
 
-if [ "$command" == "hist" ]; then
+if [ "$command" == "hist" -o "$command" == "history" ]; then
   requireSameDir=false
   removeDuplicates=false
   verbose=false
