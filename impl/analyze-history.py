@@ -73,12 +73,16 @@ def analyzePaths(paths):
 
   # get representative setup times and runtimes
   overallSetupTimes = []
+  approximateTotalSetupTime = 0
   overallRuntimes = []
+  approximateTotalRuntime = 0
   for command, executions in commandExecutions:
     setupTimes = [execution.preparationTime.total_seconds() for execution in executions]
     runtimes = [execution.duration.total_seconds() for execution in executions]
     overallSetupTime = statistics.median(setupTimes) * len(setupTimes)
     overallRuntime = statistics.median(runtimes) * len(runtimes)
+    approximateTotalSetupTime += overallSetupTime
+    approximateTotalRuntime += overallRuntime
     overallSetupTimes.append(TimeAnalysis(command, len(setupTimes), statistics.median(setupTimes)))
     overallRuntimes.append(TimeAnalysis(command, len(runtimes), statistics.median(runtimes)))
 
@@ -87,12 +91,14 @@ def analyzePaths(paths):
   for analysis in slowToSetUpCommands:
     total = analysis.getOverallSeconds()
     print(" total = " + str(total) + "s =\t " + str(analysis.numExecutions) + " * " + str(analysis.typicalDurationSeconds) + "s for\t " + str(analysis.command))
+  print("Total time typing commands approximately " + str((int)(approximateTotalSetupTime/3060)) + "h")
 
   slowToRunCommands = selectSlowCommands(overallRuntimes)
   print("\nCommands taking substantial time to run:")
   for analysis in slowToRunCommands:
     total = analysis.getOverallSeconds()
     print(" total = " + str(total) + "s =\t " + str(analysis.numExecutions) + " * " + str(analysis.typicalDurationSeconds) + "s for\t " + str(analysis.command))
+  print("Total time running commands approximately " + str((int)(approximateTotalRuntime/3600)) + "h")
 
 def selectSlowCommands(analyses):
   slowCommands = []
