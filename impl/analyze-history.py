@@ -69,7 +69,7 @@ def analyzePaths(paths):
   commandExecutions = [(command, executions) for (command, executions) in commandExecutions if len(executions) >= 3]
 
   # skip some specific commands for which the data isn't very helpful
-  commandExecutions = [(command, executions) for (command, executions) in commandExecutions if not command.startswith("ses at ")]
+  commandExecutions = [(command, executions) for (command, executions) in commandExecutions if not command.startswith("ses at ") and not command.startswith("ses aat")]
 
   # get representative setup times and runtimes
   overallSetupTimes = []
