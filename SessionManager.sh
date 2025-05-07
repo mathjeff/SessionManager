@@ -66,6 +66,11 @@ Usage: SessionManager.sh <command> [<arguments>]
     detach [--all]
       Detach from the current session
 
+  Data location
+
+    Data is stored in $HOME/sessionData by default
+    To change this directory, set the SESSION_MANAGER_HOME environment variable to the desired directory
+
   Scripting hooks that aren't intended for users to interact with directly
 
     name
@@ -84,8 +89,11 @@ Usage: SessionManager.sh <command> [<arguments>]
 }
 
 dirOfThisFile="${0//\/SessionManager.sh/}"
-#dataDir="$(cd $dirOfThisFile/.. && pwd)/sessions"
-dataDir="$dirOfThisFile/../sessions"
+#dataDir="$dirOfThisFile/../sessions"
+if [ "$SESSION_MANAGER_HOME" == "" ]; then
+  SESSION_MANAGER_HOME="$HOME/sessionData"
+fi
+dataDir="$SESSION_MANAGER_HOME"
 sessionsDir="$dataDir/sessions"
 windowsDir="$dataDir/windows"
 
