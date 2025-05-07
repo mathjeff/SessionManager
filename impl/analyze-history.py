@@ -1,4 +1,4 @@
-#!python
+#!/usr/bin/python3
 
 import datetime, random, statistics, sys
 
