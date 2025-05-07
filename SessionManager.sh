@@ -332,7 +332,7 @@ function analyzeSession() {
   analysisScriptDir="$dirOfThisFile/impl"
   analysisScript="$analysisScriptDir/analyze-history.sh"
   historyFile="$sessionsDir/$analyzeSessionName/history"
-  relativeHistoryFile="$(realpath --relative-to $analysisScriptDir $historyFile)"
+  relativeHistoryFile="$(resolvePath "$historyFile")"
   "$analysisScript" "$relativeHistoryFile"
 }
 
@@ -359,9 +359,15 @@ if [ "$command" == "notes" ]; then
   exit
 fi
 
-function relpath() {
-  abspath="$1"
-  realpath "$abspath" --relative-to .
+# Resolves the given path to a full path that can be used by the operating system
+# This currently only has an effect in Cygwin
+function resolvePath() {
+  path="$1"
+  if type cygpath >/dev/null 2>/dev/null; then
+    cygpath -w "$path"
+  else
+    echo "$path"
+  fi
 }
 
 if [ "$command" == "hist" -o "$command" == "history" ]; then
