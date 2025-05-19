@@ -326,6 +326,17 @@ if [ "$command" == "attach" -o "$command" == "at" -o "$command" == "aat" ]; then
   exit
 fi
 
+# Resolves the given path to a full path that can be used by the operating system
+# This currently only has an effect in Cygwin
+function resolvePath() {
+  path="$1"
+  if type cygpath >/dev/null 2>/dev/null; then
+    cygpath -w "$path"
+  else
+    echo "$path"
+  fi
+}
+
 function analyzeSession() {
   analyzeSessionName="$1"
 
@@ -358,17 +369,6 @@ if [ "$command" == "notes" ]; then
   vi ${notesPath}
   exit
 fi
-
-# Resolves the given path to a full path that can be used by the operating system
-# This currently only has an effect in Cygwin
-function resolvePath() {
-  path="$1"
-  if type cygpath >/dev/null 2>/dev/null; then
-    cygpath -w "$path"
-  else
-    echo "$path"
-  fi
-}
 
 if [ "$command" == "hist" -o "$command" == "history" ]; then
   requireSameDir=false
