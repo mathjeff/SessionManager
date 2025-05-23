@@ -247,8 +247,31 @@ function setSessionName() {
 function setAllWindowsSessionName() {
   newSessionName="$1"
 
+  # remove old window metadata so we don't have to keep updating it every time we call this function
+  removeOldWindowData
+
   # update session name for other windows
   echo "$newSessionName" | tee $windowsDir/*/sessionName >/dev/null
+}
+
+function removeOldWindowData() {
+  oldWindows="$(ls $windowsDir | head -n -16)"
+  if [ "$oldWindows" != "" ]; then
+    echo "Removing old windows metadata in $windowsDir"
+    numRemoved=0
+    for removeDir in $oldWindows; do
+      removeDir="$windowsDir/$removeDir"
+      if [ -e "$removeDir" ]; then
+        echo "Removing old window metadata $removeDir"
+        rm -rf "$removeDir"
+        numRemoved="$(($numRemoved + 1))"
+      else
+        echo "Error: couldn't find $removeDir"
+        exit 1
+      fi
+    done
+    echo "Removed $numRemoved old windows metadata in $windowsDir"
+  fi
 }
 
 if [ "$command" == "new" ]; then
