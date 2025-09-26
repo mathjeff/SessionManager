@@ -398,7 +398,7 @@ if [ "$command" == "hist" -o "$command" == "history" ]; then
   removeDuplicates=false
   verbose=false
   includeAllSessions=false
-  length=
+  length=10
   filter=
 
   while [ "$1" != "" ]; do
