@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script outputs stdin and adds a title if the input is nonempty
 title="$1"
-while read line
+while read -r line
 do
   if [ "$title" != "" ]; then
     echo "$title"
