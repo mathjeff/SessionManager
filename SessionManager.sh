@@ -276,6 +276,10 @@ function removeOldWindowData() {
 
 if [ "$command" == "new" ]; then
   newSessionName="$1"
+  if [ "$newSessionName" == "" ]; then
+    echo "<sessionName> is required"
+    exit 1
+  fi
   setSessionName "$newSessionName"
   if [ "$2" == "--all" ]; then
     setAllWindowsSessionName "$sessionName"
