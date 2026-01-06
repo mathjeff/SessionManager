@@ -19,7 +19,7 @@ Usage: SessionManager.sh <command> [<arguments>]
 
     at     <name> [--all]
     attach <name> [--all]
-      Attaches to the session named <name>
+      Attaches to the session named <name> and activates it if it isn't already active.
       If --all is specified, all windows are attached to the session named <name>
 
     aat <name>
