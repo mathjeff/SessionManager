@@ -50,11 +50,11 @@ class TimeAnalysis():
 
 def analyzePaths(paths):
   print("analyzing paths " + str(paths))
-  executions = parseCommandDurations(paths)
+  allExecutions = parseExecutions(paths)
 
   # group executions by command
   executionsByCommand = {}
-  for execution in executions:
+  for execution in allExecutions:
     command = execution.command
     if command not in executionsByCommand:
       executionsByCommand[command] = []
@@ -100,6 +100,11 @@ def analyzePaths(paths):
     print(" total = " + str(total) + "s =\t " + str(analysis.numExecutions) + " * " + str(analysis.typicalDurationSeconds) + "s for\t " + str(analysis.command))
   print("Total time running commands approximately " + str((int)(approximateTotalRuntime/3600)) + "h")
 
+  verboseWords = selectVerboseWords(allExecutions, 10)
+  print("\nWords with with the most total characters typed:")
+  for entry in verboseWords:
+    print(" " + str(entry[1]) + ": " + entry[0])
+
 def selectSlowCommands(analyses):
   slowCommands = []
   while len(slowCommands) < 8 and len(analyses) > 0:
@@ -122,7 +127,34 @@ def chooseSlowCommandIndex(analyses):
       return i
   return len(analyses) - 1
 
-def parseCommandDurations(paths):
+# finds the most popular words whose total letters typed are the most
+def selectVerboseWords(executions, targetCount):
+  # count how often each word was entered
+  wordCounts = {}
+  for execution in executions:
+    for word in execution.command.split(" "):
+      wordCounts[word] = wordCounts.get(word, 0) + 1
+  commandLetterCounts = []
+  prevGCCount = 0
+  for word, count in wordCounts.items():
+    numLettersTyped = len(word) * count
+    commandLetterCounts.append((word, numLettersTyped))
+    if len(commandLetterCounts) > targetCount * 2 and len(commandLetterCounts) > prevGCCount * 2:
+      prevGCCount = len(commandLetterCounts)
+      # garbage collect
+      letterCounts = sorted([x[1] for x in commandLetterCounts])
+      thresholdCount = letterCounts[-targetCount]
+      commandLetterCounts = [x for x in commandLetterCounts if x[1] >= thresholdCount]
+  # garbage collect
+  letterCounts = sorted([x[1] for x in commandLetterCounts])
+  thresholdCount = letterCounts[-targetCount]
+  commandLetterCounts = [x for x in commandLetterCounts if x[1] >= thresholdCount]
+  # sort
+  results = sorted(commandLetterCounts, reverse = True, key = lambda x: x[1])
+  results = results[-targetCount:]
+  return results
+
+def parseExecutions(paths):
   executions = []
 
   for path in paths:
