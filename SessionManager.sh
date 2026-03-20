@@ -2,6 +2,7 @@
 set -e
 
 function usage() {
+  message="$1"
   echo "
 SessionManager: save and recall information to and from sessions
 
@@ -84,6 +85,10 @@ Usage: SessionManager.sh <command> [<arguments>]
       Declares that the given command is executing and should be added to the history
 
 "
+
+  if [ "$message" != "" ]; then
+    echo "$message"
+  fi
 
   exit 1
 }
@@ -402,9 +407,8 @@ if [ "$command" == "hist" -o "$command" == "history" ]; then
   removeDuplicates=false
   verbose=false
   includeAllSessions=false
-  length=10
+  length=
   filter=
-
   while [ "$1" != "" ]; do
     arg="$1"
     shift
@@ -429,8 +433,14 @@ if [ "$command" == "hist" -o "$command" == "history" ]; then
       shift
       continue
     fi
+    if [ "$length" != "" ]; then
+      usage "Unrecognized argument '$arg'"
+    fi
     length="$arg"
   done
+  if [ "$length" == "" ]; then
+    length=10
+  fi
   if [ "$includeAllSessions" == "true" ]; then
     sessionNames="*"
   else
