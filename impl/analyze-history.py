@@ -111,7 +111,7 @@ def selectSlowCommands(analyses):
     index = chooseSlowCommandIndex(analyses)
     slowCommands.append(analyses[index])
     analyses = analyses[:index] + analyses[index+1:]
-  slowCommands = sorted(slowCommands, key=TimeAnalysis.getOverallSeconds)
+  slowCommands = sorted(slowCommands, reverse=True, key=TimeAnalysis.getOverallSeconds)
   return slowCommands
 
 def chooseSlowCommandIndex(analyses):
